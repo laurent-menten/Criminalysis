@@ -6,15 +6,13 @@ import java.util.logging.Logger;
 import be.lmenten.criminalysis.db.CriminalysisDB;
 import be.lmenten.utils.app.Application;
 import be.lmenten.utils.h2.H2Database;
+import be.lmenten.utils.swing.SwingUtils;
 
 public class Criminalysis
 	extends Application<Criminalysis>
 {
 	public static final Version VERSION
 		= Version.parse( "1.0.1-ea+1-20200605" );
-
-	// -------------------------------------------------------------------------
-
 
 	// =========================================================================
 	// === CONSTRUCTOR(s) ======================================================
@@ -31,6 +29,8 @@ public class Criminalysis
 	@Override
 	public void initialize()
 	{
+		SwingUtils.setNimbusLookAndFeel();
+
 		if( logWindow != null )
 		{
 			logWindow.setVisible( true );
@@ -51,7 +51,7 @@ public class Criminalysis
 	{
 		try( H2Database db = new CriminalysisDB( "./test" ) )
 		{
-			db.open( "lmenten", "abcd1234" );
+			db.open();
 		}
 		catch( Exception e )
 		{

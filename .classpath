@@ -6,7 +6,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="src" path="src-jxmapviewer"/>
+	<classpathentry kind="src" path="src-jxmapviewer2"/>
 	<classpathentry kind="src" path="src-jscroll"/>
 	<classpathentry kind="lib" path="lib/h2-1.4.200.jar" sourcepath="lib/h2-1.4.200-sources.jar">
 		<attributes>
