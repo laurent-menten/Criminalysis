@@ -6,6 +6,8 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src-jxmapviewer"/>
+	<classpathentry kind="src" path="src-jscroll"/>
 	<classpathentry kind="lib" path="lib/h2-1.4.200.jar" sourcepath="lib/h2-1.4.200-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/Criminalysis/lib/h2-1.4.200-javadoc.jar!/"/>
