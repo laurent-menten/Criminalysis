@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Criminalysis:jar">
+    <output-path>$PROJECT_DIR$</output-path>
+    <root id="archive" name="Criminalysis.jar">
+      <element id="module-output" name="Criminalysis" />
+      <element id="module-output" name="lib-swingx" />
+      <element id="module-output" name="lib-lmenten" />
+      <element id="module-output" name="lib-lmenten-math" />
+      <element id="module-output" name="lib-lmenten-swing" />
+      <element id="module-output" name="lib-jlfgr" />
+    </root>
+  </artifact>
+</component>

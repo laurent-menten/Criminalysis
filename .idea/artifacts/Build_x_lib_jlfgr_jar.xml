@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Build-x-lib-jlfgr:jar">
+    <output-path>$PROJECT_DIR$/lib/build</output-path>
+    <root id="archive" name="lib-jlfgr.jar">
+      <element id="module-output" name="lib-jlfgr" />
+    </root>
+  </artifact>
+</component>

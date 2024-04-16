@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true">
+        <processorPath useClasspath="false">
+          <entry name="$PROJECT_DIR$/lib/build/BuildHelpers.jar" />
+          <entry name="$PROJECT_DIR$/lib/guava-33.0.0-jre.jar" />
+          <entry name="$PROJECT_DIR$/lib/build/auto-service-1.1.1/auto-common-1.2.2.jar" />
+          <entry name="$PROJECT_DIR$/lib/build/auto-service-1.1.1/auto-service-1.1.1.jar" />
+          <entry name="$PROJECT_DIR$/lib/build/auto-service-1.1.1/auto-service-annotations-1.1.1.jar" />
+        </processorPath>
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

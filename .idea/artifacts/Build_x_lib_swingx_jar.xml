@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Build-x-lib-swingx:jar">
+    <output-path>$PROJECT_DIR$/lib/build</output-path>
+    <root id="archive" name="lib-swingx.jar">
+      <element id="module-output" name="lib-swingx" />
+    </root>
+  </artifact>
+</component>
