@@ -1,3 +1,21 @@
+/*
+ * ============================================================================
+ * =- Criminalysis -=- A crime analysis toolbox -=- (c) 2024+ Laurent Menten -=
+ * ============================================================================
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * ============================================================================
+ */
 
 package be.lmenten.criminalysis.plugins;
 
@@ -6,6 +24,7 @@ import be.lmenten.criminalysis.db.CriminalysisDatabase;
 import be.lmenten.criminalysis.ui.CriminalysisMainFrame;
 
 import javax.swing.Icon;
+import java.lang.annotation.*;
 
 /**
  * Plugin base class.
@@ -17,6 +36,21 @@ import javax.swing.Icon;
 public abstract class Plugin
 	implements Runnable
 {
+	// ========================================================================
+	// = Marker interface for internal plugins ================================
+	// ========================================================================
+
+	@Inherited
+	@Target( ElementType.TYPE )
+	@Retention( RetentionPolicy.RUNTIME )
+	public @interface Internal
+	{
+	}
+
+	// ========================================================================
+	// =
+	// ========================================================================
+
 	public static final String KEY_NAME = "plugin.name";
 	public static final String KEY_DESCRIPTION = "plugin.description";
 	public static final String KEY_SHORT_DESCRIPTION = "plugin.short.description";
@@ -74,7 +108,7 @@ public abstract class Plugin
 	 *
 	 * @return the application instance
 	 */
-	public final Criminalysis getApp()
+	public final Criminalysis getApplication()
 	{
 		return app;
 	}
@@ -109,6 +143,10 @@ public abstract class Plugin
 	 * This method is called when the plugin is loaded. At that point the
 	 * application was pre-initialized but the database is not yet opened.
 	 * </p>
+	 * <p>
+	 * This is typically where the plugin will register its components like
+	 * database helpers, actions etc.
+	 * </p>
 	 */
 	public void preInit()
 	{
@@ -120,6 +158,10 @@ public abstract class Plugin
 	 * <p>
 	 * This method is called when the database is open and the application
 	 * was initialized.
+	 * </p>
+	 * <p>
+	 * This is typically where the plugin will configure itself according to
+	 * the preferences and data that are stored in the database.
 	 * </p>
 	 */
 	public abstract void init();
@@ -138,6 +180,8 @@ public abstract class Plugin
 		// default: do nothing.
 	}
 
+	// ------------------------------------------------------------------------
+
 	/**
 	 * Run plugin
 	 */
@@ -155,6 +199,8 @@ public abstract class Plugin
 	public void idle( boolean isIdle )
 	{
 	}
+
+	// ------------------------------------------------------------------------
 
 	/**
 	 * Called for every plugin when application is closing.

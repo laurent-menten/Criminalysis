@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Tool-Installer:jar">
+    <output-path>$PROJECT_DIR$/Tools/Installer</output-path>
+    <root id="archive" name="Installer.jar">
+      <element id="module-output" name="Installer" />
+    </root>
+  </artifact>
+</component>

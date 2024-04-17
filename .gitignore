@@ -1,4 +1,9 @@
 ### Criminalysis ###
+/dist/
+
+keystore.jks
+master.cer
+
 test.mv.db
 
 ### IntelliJ IDEA ###

@@ -1,6 +1,6 @@
 /*
  * ============================================================================
- * =- jDungeonMaster -=- A D&D toolbox for DMs  -=- (c) 2024+ Laurent Menten -=
+ * =- Criminalysis -=- A crime analysis toolbox -=- (c) 2024+ Laurent Menten -=
  * ============================================================================
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -14,11 +14,6 @@
  *
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <https://www.gnu.org/licenses/>.
- * ============================================================================
- * jDungeonMaster is unofficial Fan Content permitted under the Fan Content
- * Policy. Not approved/endorsed by Wizards. Portions of the materials used
- * are property of Wizards of the Coast. ©Wizards of the Coast LLC.
- * See <https://company.wizards.com/en/legal/fancontentpolicy> for details.
  * ============================================================================
  */
 
@@ -119,19 +114,19 @@ public class PluginsManager<T extends Plugin>
 		// --------------------------------------------------------------------
 
 		// When not running from jar, services are not discovered...
-		// We mark them with @InternalService and do it ourselves.
+		// We mark them with @Plugin.Internal and do it ourselves.
 
 		if( ! Criminalysis.isRunningFromJar() )
 		{
 			log.info( "Not running from jar, self-discovering internal plugins." );
 
-			Reflections reflections = new Reflections( "be.lmenten.jdm" );
+			Reflections reflections = new Reflections( "be.lmenten.criminalysis" );
 			Set<Class<? extends Plugin>> classes = reflections.getSubTypesOf( Plugin.class );
 
 			int count = 0;
 			for( Class<? extends Plugin> clazz : classes )
 			{
-				if( clazz.isAnnotationPresent( InternalPlugin.class ) )
+				if( clazz.isAnnotationPresent( Plugin.Internal.class ) )
 				{
 					try
 					{
@@ -247,7 +242,7 @@ public class PluginsManager<T extends Plugin>
 	private static final ResourceBundle rs
 		= ResourceBundle.getBundle( MethodHandles.lookup().lookupClass().getName() );
 
-	private static String $( @PropertyKey( resourceBundle = "be.lmenten.criminalysis.plugins.PluginsManager") String key )
+	private static String $( @PropertyKey(resourceBundle = "be.lmenten.criminalysis.plugins.PluginsManager") String key )
 	{
 		return rs.getString( key );
 	}

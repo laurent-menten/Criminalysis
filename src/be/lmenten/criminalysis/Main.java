@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ * =- Criminalysis -=- A crime analysis toolbox -=- (c) 2024+ Laurent Menten -=
+ * ============================================================================
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * ============================================================================
+ */
+
 package be.lmenten.criminalysis;
 
 import be.lmenten.criminalysis.db.CriminalysisDatabase;
@@ -195,23 +214,11 @@ public class Main
 		log.log( Level.INFO, $("msg.app.logfile"), logFile );
 
 		// --------------------------------------------------------------------
-		// - Install FlatLaf look and feels -----------------------------------
-		// --------------------------------------------------------------------
-
-		FlatDarkLaf.installLafInfo();
-		FlatLightLaf.installLafInfo();
-		FlatDarculaLaf.installLafInfo();
-		FlatIntelliJLaf.installLafInfo();
-
-		FlatMacDarkLaf.installLafInfo();
-		FlatMacLightLaf.installLafInfo();
-
+		// - Database file selection ------------------------------------------
 		// --------------------------------------------------------------------
 
 		FlatDarkLaf.setup();
 
-		// --------------------------------------------------------------------
-		// - Database file selection ------------------------------------------
 		// --------------------------------------------------------------------
 
 		CriminalysisDatabaseDescriptor databaseDescriptor = new CriminalysisDatabaseDescriptor();

@@ -1,6 +1,6 @@
 /*
  * ============================================================================
- * =- jDungeonMaster -=- A D&D toolbox for DMs  -=- (c) 2024+ Laurent Menten -=
+ * =- Criminalysis -=- A crime analysis toolbox -=- (c) 2024+ Laurent Menten -=
  * ============================================================================
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free

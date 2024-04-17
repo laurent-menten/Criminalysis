@@ -4,6 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/BuildHelpers/BuildHelpers.iml" filepath="$PROJECT_DIR$/BuildHelpers/BuildHelpers.iml" />
       <module fileurl="file://$PROJECT_DIR$/Criminalysis.iml" filepath="$PROJECT_DIR$/Criminalysis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Tools/Installer/Installer.iml" filepath="$PROJECT_DIR$/Tools/Installer/Installer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Tools/Launcher/Launcher.iml" filepath="$PROJECT_DIR$/Tools/Launcher/Launcher.iml" />
       <module fileurl="file://$PROJECT_DIR$/Plugins/TestPlugin/TestPlugin.iml" filepath="$PROJECT_DIR$/Plugins/TestPlugin/TestPlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/../Libraries/lib-jlfgr/lib-jlfgr.iml" filepath="$PROJECT_DIR$/../Libraries/lib-jlfgr/lib-jlfgr.iml" />
       <module fileurl="file://$PROJECT_DIR$/../LMenten-Libraries/lib-lmenten/lib-lmenten.iml" filepath="$PROJECT_DIR$/../LMenten-Libraries/lib-lmenten/lib-lmenten.iml" />

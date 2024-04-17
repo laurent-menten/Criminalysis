@@ -1,5 +1,6 @@
 package org.swingexplorer.internal;
 
+import be.lmenten.util.swing.SwingUtils;
 import org.swingexplorer.edt_monitor.EDTDebugQueue;
 import org.swingexplorer.graphics.Player;
 import org.swingexplorer.idesupport.IDESupport;
@@ -63,6 +64,18 @@ public class Application implements Runnable {
         personalizerRegistry.addPersonalizer("tblEvents", new TablePersonalizer("eventTableColumnSizes"));
         personalizerRegistry.addPersonalizer("pnlEventProperties.tblProperties", new TablePersonalizer("eventDetailTableColumnSizes"));
         personalizerRegistry.addPersonalizer("pnlPropertySheet.tblProperties", new TablePersonalizer("propertyTableColumnSizes"));
+
+        // --------------------------------------------------------------------
+        // LMENTEN / BEGIN ----------------------------------------------------
+        // --------------------------------------------------------------------
+
+        // Send frame to last screen.
+
+        SwingUtils.showOnScreen( -1, frmMain, true );
+
+        // --------------------------------------------------------------------
+        // - LMENTEN / END ----------------------------------------------------
+        // --------------------------------------------------------------------
 
         // open frame
         frmMain.setVisible(true);

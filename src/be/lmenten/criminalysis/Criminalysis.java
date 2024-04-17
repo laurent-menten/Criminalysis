@@ -1,3 +1,22 @@
+/*
+ * ============================================================================
+ * =- Criminalysis -=- A crime analysis toolbox -=- (c) 2024+ Laurent Menten -=
+ * ============================================================================
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * ============================================================================
+ */
+
 package be.lmenten.criminalysis;
 
 import be.lmenten.criminalysis.db.CriminalysisDatabase;
@@ -7,20 +26,10 @@ import be.lmenten.criminalysis.scripting.ScriptClassFilter;
 import be.lmenten.criminalysis.ui.CriminalysisMainFrame;
 import be.lmenten.util.exception.AbortException;
 import org.jetbrains.annotations.PropertyKey;
-import org.jxmapviewer.JXMapKit;
-import org.jxmapviewer.JXMapViewer;
-import org.jxmapviewer.OSMTileFactoryInfo;
-import org.jxmapviewer.viewer.DefaultTileFactory;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.TileFactoryInfo;
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 import javax.script.ScriptEngine;
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
-import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -31,6 +40,8 @@ import java.util.ResourceBundle;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 public class Criminalysis
 	implements CriminalysisConstants, AutoCloseable, Runnable
@@ -49,9 +60,9 @@ public class Criminalysis
 
 	// These values are computed by buildTools.ant.xml (task: "build number")
 
-	private static final int BUILD_NUMBER = 49;
-	private static final String BUILD_DATE = "20240416";
-	private static final String BUILD_TIME = "113912";
+	private static final int BUILD_NUMBER = 51;
+	private static final String BUILD_DATE = "20240417";
+	private static final String BUILD_TIME = "203019";
 
 	// ========================================================================
 	// = END OF GENERATED VALUES - DO NOT EDIT ================================
@@ -130,8 +141,13 @@ public class Criminalysis
 	}
 
 	// ========================================================================
-	// =
+	// = Initialization =======================================================
 	// ========================================================================
+
+	// ------------------------------------------------------------------------
+	// preInit() is called BEFORE the database is opened.
+	// Preferences ARE NOT accessible at this time.
+	// ------------------------------------------------------------------------
 
 	public void preInit()
 		throws AbortException, IOException
@@ -150,7 +166,7 @@ public class Criminalysis
 		}
 
 		// --------------------------------------------------------------------
-		// - Plugins load -----------------------------------------------------
+		// - Plugins discover & load ------------------------------------------
 		// --------------------------------------------------------------------
 
 		log.fine( $("app.preinit.plugins.load") );
@@ -184,9 +200,62 @@ public class Criminalysis
 		} );
 	}
 
+	// ------------------------------------------------------------------------
+	// init() is called AFTER the database was opened.
+	// Preferences are now fully accessible.
+	// ------------------------------------------------------------------------
+
 	public void init()
 		throws AbortException
 	{
+		log.config( $("app.init") );
+
+		// --------------------------------------------------------------------
+		// - Preferences ------------------------------------------------------
+		// --------------------------------------------------------------------
+
+		try
+		{
+			Preferences node = systemPreferencesNode( this );
+
+			long runCount = node.getLong( "runCount", 0 );
+			runCount++;
+
+			node.putLong( "runCount", runCount );
+			node.flush();
+		}
+		catch( BackingStoreException ex )
+		{
+			throw new AbortException( "Could not store runs count", ex );
+		}
+
+		// --------------------------------------------------------------------
+		// - Script engine configuration --------------------------------------
+		// --------------------------------------------------------------------
+
+		log.fine( $("app.init.script.engine") );
+
+		getScriptClassFilter().addPackageRegex(
+			"java.lang.*",
+			true
+		);
+
+		getScriptEngine().put( "Criminalysis", scriptEngineInterface );
+
+		// --------------------------------------------------------------------
+		// - Init plugins -----------------------------------------------------
+		// --------------------------------------------------------------------
+
+		log.fine( $("app.init.plugins.init") );
+
+		getPluginsManager().forEach( plugin ->
+		{
+			String message = MessageFormat.format( $("msg.init.plugin"), plugin.getIdentifier() );
+			log.log( Level.INFO, message );
+
+			plugin.init();
+		} );
+
 	}
 
 	// ========================================================================
@@ -197,71 +266,25 @@ public class Criminalysis
 	public void run()
 		throws AbortException
 	{
-		final JXMapKit jXMapKit = new JXMapKit();
-		TileFactoryInfo info = new OSMTileFactoryInfo();
-		DefaultTileFactory tileFactory = new DefaultTileFactory(info);
-		jXMapKit.setTileFactory(tileFactory);
+		log.config( $("app.run") );
 
-		//location of Java
-		final GeoPosition gp = new GeoPosition(-7.502778, 111.263056);
+		// --------------------------------------------------------------------
 
-		final JToolTip tooltip = new JToolTip();
-		tooltip.setTipText("Java");
-		tooltip.setComponent(jXMapKit.getMainMap());
-		jXMapKit.getMainMap().add(tooltip);
+		pluginsManager.forEach( Plugin::run );
 
-		jXMapKit.setZoom(11);
-		jXMapKit.setAddressLocation(gp);
+		// --------------------------------------------------------------------
 
-		jXMapKit.getMainMap().addMouseMotionListener(new MouseMotionListener() {
-			@Override
-			public void mouseDragged( MouseEvent e) {
-				// ignore
-			}
-
-			@Override
-			public void mouseMoved(MouseEvent e)
-			{
-				JXMapViewer map = jXMapKit.getMainMap();
-
-				// convert to world bitmap
-				Point2D worldPos = map.getTileFactory().geoToPixel(gp, map.getZoom());
-
-				// convert to screen
-				Rectangle rect = map.getViewportBounds();
-				int sx = (int) worldPos.getX() - rect.x;
-				int sy = (int) worldPos.getY() - rect.y;
-				Point screenPos = new Point(sx, sy);
-
-				// check if near the mouse
-				if (screenPos.distance(e.getPoint()) < 20)
-				{
-					screenPos.x -= tooltip.getWidth() / 2;
-
-					tooltip.setLocation(screenPos);
-					tooltip.setVisible(true);
-				}
-				else
-				{
-					tooltip.setVisible(false);
-				}
-			}
-		});
-
-		// Display the viewer in a JFrame
-		JFrame frame = new JFrame("JXMapviewer2 Example 6");
-		frame.getContentPane().add(jXMapKit);
-		frame.setSize(800, 600);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setVisible(true);
+		getMainFrame().setStatusMessage( "Ready." );
 	}
 
-	// ========================================================================
-	// =
-	// ========================================================================
-
-	public static void reportUnexpectedException( Throwable t, File logFile )
+	/**
+	 * Called when main frame enters or leaves idle state.
+	 *
+	 * @param isIdle true if entering idle state, false if leaving idle state
+	 */
+	public void idle( boolean isIdle )
 	{
+		pluginsManager.forEach( plugin -> plugin.idle( isIdle ) );
 	}
 
 	// ========================================================================
@@ -272,6 +295,13 @@ public class Criminalysis
 	public void close()
 		throws Exception
 	{
+		log.info( $("app.close") );
+
+		// --------------------------------------------------------------------
+		// - Cleanup plugins --------------------------------------------------
+		// --------------------------------------------------------------------
+
+		pluginsManager.forEach( Plugin::close );
 	}
 
 	// ========================================================================
@@ -316,9 +346,20 @@ public class Criminalysis
 	}
 
 	// ========================================================================
+	// =
+	// ========================================================================
+
+	public static void reportUnexpectedException( Throwable t, File logFile )
+	{
+	}
+
+	// ========================================================================
 	// = Getters ==============================================================
 	// ========================================================================
 
+	// ------------------------------------------------------------------------
+	// -
+	// ------------------------------------------------------------------------
 
 	public PluginsManager<Plugin> getPluginsManager()
 	{
@@ -333,6 +374,56 @@ public class Criminalysis
 	public CriminalysisDatabase getDatabase()
 	{
 		return db;
+	}
+
+	// ------------------------------------------------------------------------
+	// - Preferences ----------------------------------------------------------
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Get a user preferences node for the given object's class.
+	 *
+	 * @param o the object
+	 * @return the preferences node
+	 */
+	public static Preferences userPreferencesNode( Object o )
+	{
+		return userPreferencesNodeForClass( o.getClass() );
+	}
+
+	/**
+	 * Get a user preferences node for the given class.
+	 *
+	 * @param c the class
+	 * @return the preferences node
+	 */
+	public static Preferences userPreferencesNodeForClass( Class<?> c )
+	{
+		return Preferences.userNodeForPackage( c )
+			.node( c.getSimpleName() );
+	}
+
+	/**
+	 * Get a system preferences node for the given object's class.
+	 *
+	 * @param o the object
+	 * @return the preferences node
+	 */
+	public static Preferences systemPreferencesNode( Object o )
+	{
+		return systemPreferencesNodeForClass( o.getClass() );
+	}
+
+	/**
+	 * Get a system preferences node for the given class.
+	 *
+	 * @param c the class
+	 * @return the preferences node
+	 */
+	public static Preferences systemPreferencesNodeForClass( Class<?> c )
+	{
+		return Preferences.systemNodeForPackage( c )
+			.node( c.getSimpleName() );
 	}
 
 	// ========================================================================
@@ -572,7 +663,7 @@ public class Criminalysis
 	// ========================================================================
 
 	private static final ResourceBundle rs
-		= ResourceBundle.getBundle( Criminalysis.class.getName() );
+		= ResourceBundle.getBundle( MethodHandles.lookup().lookupClass().getName() );
 
 	private static String $( @PropertyKey(resourceBundle = "be.lmenten.criminalysis.Criminalysis") String key )
 	{

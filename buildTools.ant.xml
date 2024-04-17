@@ -1,0 +1,240 @@
+<!--
+ * ============================================================================
+ * =- Criminalysis -=- A crime analysis toolbox -=- (c) 2024+ Laurent Menten -=
+ * ============================================================================
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * ============================================================================
+-->
+
+<project name="Criminalysis" default="build number" basedir=".">
+    <property name="dir.lib" location="${basedir}/lib"/>
+    <property name="dir.plugins" location="${basedir}/plugins"/>
+    <property name="dir.src" location="${basedir}/src"/>
+
+    <property name="dir.dist" location="${basedir}/dist"/>
+    <property name="dir.dist.javadoc" location="${dir.dist}/javadoc"/>
+
+    <property name="shared.linux" location="D:\VirtualBox\Ubuntu\Shared\Criminalysis"/>
+
+    <property name="version.file" location="${dir.src}/be/lmenten/criminalysis/Criminalysis.java"/>
+
+    <!-- ##################################################################
+         # Build number ###################################################
+         ################################################################## -->
+
+    <target name="build number"
+            description="">
+
+        <propertyfile file="build.properties">
+            <entry key="build.number" type="int" default="0" operation="+"/>
+        </propertyfile>
+        <property file="build.properties"/>
+
+        <tstamp>
+            <format property="build.date" pattern="yyyyMMdd"/>
+            <format property="build.time" pattern="HHmmss"/>
+        </tstamp>
+
+        <replaceregexp file="${version.file}"
+                       match="private\s+static\s+final\s+int\s+VERSION_MAJOR\s+=\s+.*;"
+                       replace="private static final int VERSION_MAJOR = ${version.major};"
+                       byline="true"
+        />
+        <replaceregexp file="${version.file}"
+                       match="private\s+static\s+final\s+int\s+VERSION_MINOR\s+=\s+.*;"
+                       replace="private static final int VERSION_MINOR = ${version.minor};"
+                       byline="true"
+        />
+        <replaceregexp file="${version.file}"
+                       match="private\s+static\s+final\s+int\s+VERSION_SECURITY\s+=\s+.*;"
+                       replace="private static final int VERSION_SECURITY = ${version.security};"
+                       byline="true"
+        />
+
+        <replaceregexp file="${version.file}"
+                       match="private\s+static\s+final\s+String\s+PRE_RELEASE_IDENTIFIER\s+=\s+&quot;.*&quot;;"
+                       replace="private static final String PRE_RELEASE_IDENTIFIER = &quot;${pre_release.identifier}&quot;;"
+                       byline="true"
+        />
+
+        <replaceregexp file="${version.file}"
+                       match="private\s+static\s+final\s+int\s+BUILD_NUMBER\s+=\s+.*;"
+                       replace="private static final int BUILD_NUMBER = ${build.number};"
+                       byline="true"
+        />
+        <replaceregexp file="${version.file}"
+                       match="private\s+static\s+final\s+String\s+BUILD_DATE\s+=\s+&quot;.*&quot;;"
+                       replace="private static final String BUILD_DATE = &quot;${build.date}&quot;;"
+                       byline="true"
+        />
+        <replaceregexp file="${version.file}"
+                       match="private\s+static\s+final\s+String\s+BUILD_TIME\s+=\s+&quot;.*&quot;;"
+                       replace="private static final String BUILD_TIME = &quot;${build.time}&quot;;"
+                       byline="true"
+        />
+    </target>
+
+    <!-- ##################################################################
+         # Distribution archive ###########################################
+         ################################################################## -->
+
+    <target name="Package distribution archive"
+            description="">
+
+        <property  file="build.properties"/>
+        <property name="app.version" value="${version.major}.${version.minor}.${version.security}"/>
+        <property name="zipfile.name" value="Criminalysis-${app.version}-${pre_release.identifier}-build.${build.number}.zip"/>
+
+        <input message="Enter password:" addproperty="password">
+            <handler classname="be.lmenten.ant.PasswordInput"/>
+        </input>
+
+        <!-- ==============================================================
+             = Sign application jars ======================================
+             ============================================================== -->
+
+        <signjar alias="master" keystore="keystore.jks" storepass="${password}">
+            <fileset file="${basedir}/Launcher.jar"/>
+            <fileset file="${basedir}/Criminalysis.jar"/>
+            <fileset dir="${dir.plugins}" includes="*.jar"/>
+        </signjar>
+
+        <zip destfile="${dir.dist}/${zipfile.name}">
+            <zipfileset file="${basedir}/build.properties"/>
+
+            <zipfileset dir="${dir.lib}" prefix="lib" includes="**/*.jar"/>
+            <zipfileset dir="${dir.plugins}" prefix="plugins"/>
+            <zipfileset file="${basedir}/Launcher.jar"/>
+            <zipfileset file="${basedir}/jDungeonMaster.jar"/>
+
+            <zipfileset file="${basedir}/README.md"/>
+            <zipfileset file="${basedir}/LICENSE.txt"/>
+            <zipfileset file="${basedir}/LICENSE-pixelsagas.txt"/>
+            <zipfileset file="${basedir}/LICENSE-WOTC-FCP.txt"/>
+        </zip>
+    </target>
+
+    <!-- ##################################################################
+         # Installer jar ##################################################
+         ################################################################## -->
+
+    <target name="Package installer"
+            description="">
+
+        <property  file="build.properties"/>
+        <property name="app.version" value="${version.major}.${version.minor}.${version.security}"/>
+        <property name="jarfile.name" value="Criminalysis-installer-${app.version}-${pre_release.identifier}-build.${build.number}.jar"/>
+
+        <input message="Enter password:" addproperty="password">
+            <handler classname="be.lmenten.ant.PasswordInput"/>
+        </input>
+
+        <!-- ==============================================================
+             = Sign application jars ======================================
+             ============================================================== -->
+
+        <signjar alias="master" keystore="keystore.jks" storepass="${password}">
+            <fileset file="${basedir}/Launcher.jar"/>
+            <fileset file="${basedir}/jDungeonMaster.jar"/>
+            <fileset dir="${dir.plugins}" includes="*.jar"/>
+        </signjar>
+
+        <copy file="${dir.dist}/installer.jar" tofile="${dir.dist}/${jarfile.name}"/>
+
+        <jar destfile="${dir.dist}/${jarfile.name}"  update="true">
+            <zipfileset file="${basedir}/build.properties"/>
+
+            <zipfileset dir="${dir.lib}" prefix="files/lib" includes="**/*.jar"/>
+            <zipfileset dir="${dir.plugins}" prefix="files/plugins"/>
+            <zipfileset file="${basedir}/Launcher.jar"/>
+            <zipfileset file="${basedir}/jDungeonMaster.jar" prefix="files/"/>
+
+            <zipfileset file="${basedir}/README.md" prefix="files/"/>
+            <zipfileset file="${basedir}/LICENSE.txt" prefix="files/"/>
+            <zipfileset file="${basedir}/LICENSE-pixelsagas.txt" prefix="files/"/>
+            <zipfileset file="${basedir}/LICENSE-WOTC-FCP.txt" prefix="files/"/>
+        </jar>
+
+        <!-- ==============================================================
+             = Sign installer jar =========================================
+             ============================================================== -->
+
+        <signjar alias="master" keystore="keystore.jks" storepass="${password}">
+            <fileset file="${dir.dist}/${jarfile.name}"/>
+        </signjar>
+
+    </target>
+
+    <!-- ##################################################################
+         # Deploy to virtual box shared directory #########################
+         ################################################################## -->
+
+    <target name="Deploy to VirtualBox shared directory"
+            description="">
+
+        <delete dir="${shared.linux}"/>
+
+        <copy file="${basedir}/build.properties" tofile="${shared.linux}/build.properties"/>
+
+        <copy todir="${shared.linux}/lib">
+            <fileset dir="${dir.lib}" includes="**/*.jar" excludes="build/"/>
+        </copy>
+
+        <copy todir="${shared.linux}/plugins">
+            <fileset dir="${dir.plugins}" includes="*.jar"/>
+        </copy>
+
+        <copy file="${basedir}/Launcher.jar" tofile="${shared.linux}/Launcher.jar"/>
+        <copy file="${basedir}/jDungeonMaster.jar" tofile="${shared.linux}/jDungeonMaster.jar"/>
+
+        <copy file="${basedir}/README.md" tofile="${shared.linux}/README.md"/>
+        <copy file="${basedir}/LICENSE.txt" tofile="${shared.linux}/LICENSE.txt"/>
+        <copy file="${basedir}/LICENSE-pixelsagas.txt" tofile="${shared.linux}/LICENSE-pixelsagas.txt"/>
+        <copy file="${basedir}/LICENSE-WOTC-FCP.txt" tofile="${shared.linux}/LICENSE-WOTC-FCP.txt"/>
+
+    </target>
+
+
+    <!-- ##################################################################
+         # Installer jar ##################################################
+         ################################################################## -->
+
+    <!-- TODO: make this work correctly -->
+
+    <target name="Generate javadoc"
+            description="">
+
+        <javadoc packagenames="be.lmenten.dd5.*,be.lmenten.jdm.*"
+            defaultexcludes="yes"
+            sourcepath="${dir.src}"
+            destdir="${dir.dist.javadoc}"
+            splitindex="true"
+            private="true"
+            author="true" version="true" use="true"
+            windowtitle="jDownloader">
+
+            <doctitle><![CDATA[<h1>jDungeonMaster</h1>]]></doctitle>
+            <bottom><![CDATA[<i>Copyright &#169; 2024+ Laurent MENTEN. All Rights Reserved.</i>]]></bottom>
+
+            <tag name="todo" scope="all" description="To do:"/>
+
+            <group title="DD5e rules" packages="be.lmenten.dd5.*"/>
+            <group title="Application" packages="be.lmenten.jdm.*"/>
+
+            <link href="https://docs.oracle.com/javase/21/docs/api/"/>
+        </javadoc>
+
+    </target>
+
+</project>
