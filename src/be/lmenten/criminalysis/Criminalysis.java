@@ -19,7 +19,13 @@
 
 package be.lmenten.criminalysis;
 
+import be.lmenten.criminalysis.actions.ExitAction;
+import be.lmenten.criminalysis.actions.tests.NewSimpleMap;
+import be.lmenten.criminalysis.actions.tests.TableViewer;
+import be.lmenten.criminalysis.actions.tests.VideoPlayer;
+import be.lmenten.criminalysis.api.CriminalysisAction;
 import be.lmenten.criminalysis.db.CriminalysisDatabase;
+import be.lmenten.criminalysis.db.Person;
 import be.lmenten.criminalysis.plugins.Plugin;
 import be.lmenten.criminalysis.plugins.PluginsManager;
 import be.lmenten.criminalysis.scripting.ScriptClassFilter;
@@ -28,14 +34,23 @@ import be.lmenten.util.exception.AbortException;
 import org.jetbrains.annotations.PropertyKey;
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
+import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
+
+import javax.imageio.ImageIO;
 import javax.script.ScriptEngine;
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.net.URL;
 import java.nio.file.Files;
+import java.sql.SQLException;
 import java.text.MessageFormat;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -60,9 +75,9 @@ public class Criminalysis
 
 	// These values are computed by buildTools.ant.xml (task: "build number")
 
-	private static final int BUILD_NUMBER = 51;
-	private static final String BUILD_DATE = "20240417";
-	private static final String BUILD_TIME = "203019";
+	private static final int BUILD_NUMBER = 145;
+	private static final String BUILD_DATE = "20240423";
+	private static final String BUILD_TIME = "014207";
 
 	// ========================================================================
 	// = END OF GENERATED VALUES - DO NOT EDIT ================================
@@ -82,9 +97,9 @@ public class Criminalysis
 	private static final RuntimeConfiguration CONFIGURATION
 		= new RuntimeConfiguration();
 
-	// ========================================================================
-	// =
-	// ========================================================================
+	// ------------------------------------------------------------------------
+	// - Runtime --------------------------------------------------------------
+	// ------------------------------------------------------------------------
 
 	private final boolean debugMode;
 
@@ -92,6 +107,21 @@ public class Criminalysis
 		= new CountDownLatch( 1 );
 
 	// ------------------------------------------------------------------------
+
+	private final CriminalysisDatabase db;
+
+	// ------------------------------------------------------------------------
+	// - UI & System tray  ----------------------------------------------------
+	// ------------------------------------------------------------------------
+
+	private final ImageIcon icon;
+
+	// ------------------------------------------------------------------------
+
+	private final SystemTray systemTray;
+	private final TrayIcon trayIcon;
+
+	private CriminalysisMainFrame mainFrame;
 
 	// ------------------------------------------------------------------------
 	// - Plugins management ---------------------------------------------------
@@ -118,12 +148,11 @@ public class Criminalysis
 		= new ScriptEngineInterface( this );
 
 	// ------------------------------------------------------------------------
-	// -
+	// - Actions --------------------------------------------------------------
 	// ------------------------------------------------------------------------
 
-	private final CriminalysisDatabase db;
-
-	private CriminalysisMainFrame mainFrame;
+	private final Map<String,Map<String,CriminalysisAction>> actions
+		= new HashMap<>();
 
 	// ========================================================================
 	// = Constructor ==========================================================
@@ -133,6 +162,48 @@ public class Criminalysis
 	{
 		this.db = db;
 		this.debugMode = debugMode;
+
+		// --------------------------------------------------------------------
+		// - Load icon --------------------------------------------------------
+		// --------------------------------------------------------------------
+
+		try( InputStream in = CriminalysisMainFrame.class.getResourceAsStream( "/be/lmenten/criminalysis/ui/images/icon16.png" ) )
+		{
+			icon = new ImageIcon( ImageIO.read( Objects.requireNonNull( in ) ) );
+		}
+		catch( NullPointerException | IOException ex )
+		{
+			throw new AbortException( $( "err.app.icon" ), ex );
+		}
+
+		// --------------------------------------------------------------------
+		// - System tray ------------------------------------------------------
+		// --------------------------------------------------------------------
+
+		if( SystemTray.isSupported() )
+		{
+			systemTray = SystemTray.getSystemTray();
+
+			trayIcon = new TrayIcon( icon.getImage(), "Criminalysis" );
+			trayIcon.setImageAutoSize( true );
+			trayIcon.setToolTip( "Criminalysis test" );
+
+			try
+			{
+				systemTray.add( trayIcon );
+			}
+			catch( AWTException ex )
+			{
+				log.log( Level.SEVERE, "Could not set tray icon", ex );
+			}
+		}
+		else
+		{
+			systemTray = null;
+			trayIcon = null;
+
+			log.severe( "System tray not supported!" );
+		}
 	}
 
 	public void setMainFrame( CriminalysisMainFrame mainFrame )
@@ -179,6 +250,17 @@ public class Criminalysis
 			};
 
 		pluginsManager = new PluginsManager<>( Plugin.class, pluginDirectories );
+
+		// --------------------------------------------------------------------
+		// -
+		// --------------------------------------------------------------------
+
+		registerAction( new ExitAction() );
+		registerAction( new TableViewer() );
+
+		registerAction( new NewSimpleMap() );
+
+		registerAction( new VideoPlayer() );
 
 		// --------------------------------------------------------------------
 		// - preInit plugins --------------------------------------------------
@@ -255,7 +337,6 @@ public class Criminalysis
 
 			plugin.init();
 		} );
-
 	}
 
 	// ========================================================================
@@ -271,6 +352,40 @@ public class Criminalysis
 		// --------------------------------------------------------------------
 
 		pluginsManager.forEach( Plugin::run );
+
+		// --------------------------------------------------------------------
+
+//		MediaPlayerFactory factory = new MediaPlayerFactory();
+		EmbeddedMediaPlayerComponent mediaPlayerComponent = new EmbeddedMediaPlayerComponent();
+
+		// --------------------------------------------------------------------
+
+		Person person;
+
+		try
+		{
+			person = getDatabase().load( 1L, Person.class );
+			if( person == null )
+			{
+				person = new Person();
+				person.setFamilyName( "Dutroux" );
+				person.setGivenNames( "Marc", "Paul", "Alain" );
+				person.setGender( "M" );
+
+				try
+				{
+					getDatabase().save( person );
+				}
+				catch( SQLException ex )
+				{
+					log.log( Level.SEVERE, "Could not save person", ex );
+				}
+			}
+		}
+		catch( SQLException ex )
+		{
+			log.log( Level.SEVERE, "Could not load person", ex );
+		}
 
 		// --------------------------------------------------------------------
 
@@ -354,6 +469,40 @@ public class Criminalysis
 	}
 
 	// ========================================================================
+	// =
+	// ========================================================================
+
+	public void registerAction( CriminalysisAction action )
+	{
+		action.setApplication( this );
+
+		Map<String,CriminalysisAction> actionCategory = actions.get( action.getCategory() );
+		if( actionCategory == null )
+		{
+			actionCategory = new HashMap<>();
+			actions.put( action.getCategory(), actionCategory );
+		}
+
+		if( actionCategory.containsKey( action.getId() ) )
+		{
+			log.log( Level.WARNING, $("msg.action.already.registered"), action.getId() );
+		}
+
+		actionCategory.put( action.getId(), action );
+	}
+
+	public CriminalysisAction getAction( String category, String id )
+	{
+		Map<String,CriminalysisAction> actionCategory = actions.get( category );
+		if( actionCategory != null )
+		{
+			return actionCategory.get( id );
+		}
+
+		return null;
+	}
+
+	// ========================================================================
 	// = Getters ==============================================================
 	// ========================================================================
 
@@ -374,6 +523,13 @@ public class Criminalysis
 	public CriminalysisDatabase getDatabase()
 	{
 		return db;
+	}
+
+	// ------------------------------------------------------------------------
+
+	public ImageIcon getIcon()
+	{
+		return icon;
 	}
 
 	// ------------------------------------------------------------------------

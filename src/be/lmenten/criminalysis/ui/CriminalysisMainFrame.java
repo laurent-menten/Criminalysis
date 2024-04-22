@@ -20,16 +20,22 @@
 package be.lmenten.criminalysis.ui;
 
 import be.lmenten.criminalysis.Criminalysis;
+import be.lmenten.criminalysis.actions.ExitAction;
+import be.lmenten.criminalysis.actions.tests.NewSimpleMap;
+import be.lmenten.criminalysis.actions.tests.TableViewer;
+import be.lmenten.criminalysis.actions.tests.VideoPlayer;
+import be.lmenten.criminalysis.api.CriminalysisInternalFrame;
+import be.lmenten.criminalysis.ui.frames.map.SimpleMap;
 import be.lmenten.util.exception.AbortException;
+import be.lmenten.util.swing.scrollabledesktop.JScrollableDesktopInternalFrame;
+import be.lmenten.util.swing.scrollabledesktop.JScrollableDesktopPane;
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import com.formdev.flatlaf.themes.FlatMacLightLaf;
-import org.jdesktop.swingx.JXFrame;
-import org.jdesktop.swingx.JXLabel;
-import org.jdesktop.swingx.JXStatusBar;
+import org.jdesktop.swingx.*;
 import org.jetbrains.annotations.PropertyKey;
 import org.kordamp.ikonli.swing.FontIcon;
 import org.kordamp.ikonli.win10.Win10;
@@ -68,15 +74,32 @@ public class CriminalysisMainFrame
 	// -
 	// ------------------------------------------------------------------------
 
-	private final JMenuBar menuBar = new JMenuBar();
+	private final JMenuBar menuBar
+		= new JMenuBar();
 
-	private JToolBar appToolBar = new JToolBar( "app", SwingConstants.HORIZONTAL );
-	private JToolBar leftToolBar = new JToolBar( "left", SwingConstants.VERTICAL );
-	private JToolBar rightToolBar = new JToolBar( "right", SwingConstants.VERTICAL );
+	private final JToolBar appToolBar
+		= new JToolBar( "app", SwingConstants.HORIZONTAL );
+	private final JToolBar leftToolBar
+		= new JToolBar( "left", SwingConstants.VERTICAL );
+	private final JToolBar rightToolBar
+		= new JToolBar( "right", SwingConstants.VERTICAL );
 
-	private JXStatusBar statusBar = new JXStatusBar();
+	private final JXTaskPaneContainer navigator
+		= new JXTaskPaneContainer();
+	private final JScrollPane navigatorScrollPane
+		= new JScrollPane( navigator );
 
-	private final JLabel statusMessage = new JLabel();
+	private final JScrollableDesktopPane workspace
+		= new JScrollableDesktopPane();
+
+	private final JSplitPane workspaceSplitPane
+		= new JSplitPane( JSplitPane.HORIZONTAL_SPLIT, navigatorScrollPane, workspace );
+
+	private final JXStatusBar statusBar
+		= new JXStatusBar();
+
+	private final JLabel statusMessage
+		= new JLabel();
 
 	// ========================================================================
 	// = Constructor ==========================================================
@@ -90,6 +113,7 @@ public class CriminalysisMainFrame
 		// --------------------------------------------------------------------
 
 		setTitle( "Criminalysis" );
+		setIconImage( app.getIcon().getImage() );
 
 		// --------------------------------------------------------------------
 		// - Windows close operation ------------------------------------------
@@ -201,6 +225,7 @@ public class CriminalysisMainFrame
 		initAppToolBar();
 		initLeftToolBar();
 		initRightToolBar();
+		initWorkspace();
 		initStatusBar();
 
 		// --------------------------------------------------------------------
@@ -211,13 +236,13 @@ public class CriminalysisMainFrame
 		add( leftToolBar, BorderLayout.WEST );
 		add( rightToolBar, BorderLayout.EAST );
 
+		add( workspaceSplitPane, BorderLayout.CENTER );
+
 		setStatusBar( statusBar );
 
 		// --------------------------------------------------------------------
 		// - Restore window position, size, maximized state -------------------
 		// --------------------------------------------------------------------
-
-		pack();
 
 		int x = node.getInt( PREF_KEY_X, PREF_DEFAULT_X );
 		int y = node.getInt( PREF_KEY_Y, PREF_DEFAULT_Y );
@@ -296,7 +321,7 @@ public class CriminalysisMainFrame
 		long idleThreshold = node.getLong( PREF_KEY_IDLE_TIME, PREF_DEFAULT_IDLE_TIME );
 		setIdleThreshold( idleThreshold );
 
-		Duration thresholdDuration = Duration.ofMillis( idleThreshold ) ;
+		Duration thresholdDuration = Duration.ofMillis( idleThreshold );
 		String thresholdTime = String.format( "%02d:%02d:%02d.%03d",
 			thresholdDuration.toHoursPart(),
 			thresholdDuration.toMinutesPart(),
@@ -323,6 +348,8 @@ public class CriminalysisMainFrame
 		// --------------------------------------------------------------------
 
 		getRootPane().putClientProperty( com.formdev.flatlaf.FlatClientProperties.FULL_WINDOW_CONTENT, false );
+
+		revalidate();
 		setVisible( true );
 	}
 
@@ -360,36 +387,62 @@ public class CriminalysisMainFrame
 	// =
 	// ========================================================================
 
-	public void setStatusMessage( String statusText )
-	{
-		statusMessage.setText( statusText );
-	}
-
-	// ========================================================================
-	// =
-	// ========================================================================
-
 	private void initMenuBar()
 	{
 		JMenu fileMenu = new JMenu( "File" );
-		JMenuItem exitMenuItem = new JMenuItem( "Exit" );
+		JMenuItem exitMenuItem = new JMenuItem( app.getAction( "application", ExitAction.ID ) );
 		fileMenu.add( exitMenuItem );
 		menuBar.add( fileMenu );
+
+		if( app.isDebugModeEnabled() )
+		{
+			JMenu debugMenu = new JMenu( "Debug" );
+
+			JMenuItem tableViewerMenuItem = new JMenuItem( app.getAction( TableViewer.CATEGORY, TableViewer.ID ) );
+			debugMenu.add( tableViewerMenuItem );
+
+			menuBar.add( debugMenu );
+		}
 	}
 
 	private void initAppToolBar()
 	{
-		appToolBar.add( new JButton( "test" ) );
+		appToolBar.add( app.getAction( VideoPlayer.CATEGORY, VideoPlayer.ID ) );
 	}
 
 	private void initLeftToolBar()
 	{
-		leftToolBar.add( new JButton( "test" ) );
+		leftToolBar.add( app.getAction( "application", NewSimpleMap.ID ) );
 	}
 
 	private void initRightToolBar()
 	{
 		rightToolBar.add( new JButton( "test" ) );
+	}
+
+	private void initWorkspace()
+	{
+		workspaceSplitPane.setOneTouchExpandable( true );
+		workspaceSplitPane.setDividerSize( 12 );
+
+		var taskPane = new JXTaskPane( "One" );
+		taskPane.setSpecial( true );
+		taskPane.setCollapsed( false );
+		navigator.add( taskPane );
+
+		taskPane.add( new JLabel( "a" ) );
+		taskPane.add( new JButton( "b" ) );
+		taskPane.add( new JTree() );
+
+		taskPane = new JXTaskPane( "Two" );
+		taskPane.setSpecial( false );
+		taskPane.setCollapsed( true );
+		navigator.add( taskPane );
+
+		taskPane = new JXTaskPane( "Three" );
+		taskPane.setSpecial( false );
+		taskPane.setCollapsed( true );
+		navigator.add( taskPane );
 	}
 
 	private void initStatusBar()
@@ -446,6 +499,22 @@ public class CriminalysisMainFrame
 
 		clockTimer.setInitialDelay( 0 );
 		clockTimer.start();
+	}
+
+	// ========================================================================
+	// =
+	// ========================================================================
+
+	public void setStatusMessage( String statusText )
+	{
+		statusMessage.setText( statusText );
+	}
+
+	// ------------------------------------------------------------------------
+
+	public void addInternalFrame( CriminalysisInternalFrame internalFrame )
+	{
+		workspace.add( internalFrame );
 	}
 
 	// ========================================================================

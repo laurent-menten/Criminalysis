@@ -35,6 +35,8 @@ public class CriminalysisDatabase
 	public CriminalysisDatabase( String databasePath, Properties info )
 	{
 		super( databasePath, info );
+
+		registerTableHelper( Person.helper );
 	}
 
 	@Override

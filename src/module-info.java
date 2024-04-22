@@ -51,6 +51,15 @@ module Criminalysis
 	requires com.miglayout.swing;
 	requires org.kordamp.ikonli.swing;
 	requires org.kordamp.ikonli.win10;
+
+	requires jaretutil;
+
+	requires timebars;
+
+	requires com.sun.jna;
+	requires com.sun.jna.platform;
+	requires uk.co.caprica.vlcj;
+
 	exports javassist.bytecode to org.reflections;
 	exports javassist.bytecode.annotation to org.reflections;
 
